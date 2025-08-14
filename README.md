@@ -95,6 +95,4 @@ UI Layer (Compose) → ViewModel → Repository → Data Layer
 
 ✅ ExoPlayer integration with playlist support
 
-✅ Pause chat toggle and skipped messages counter
-
 The app demonstrates how to handle high-frequency data streams in Android while maintaining smooth UI performance through intelligent buffering, retention policies, and user-friendly scrolling behavior.
