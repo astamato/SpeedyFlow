@@ -2,6 +2,10 @@
 
 A sample Android application that mimics Twitch's main viewing screen with a video player and live chat feed.
 
+## Screenshots
+
+![Main screen](screenshots/screenshot1.png)
+
 ## Features
 
 ### Video Player
