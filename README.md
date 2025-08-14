@@ -81,21 +81,20 @@ UI Layer (Compose) → ViewModel → Repository → Data Layer
 - **Messages**: Twitch-style chat phrases and emotes
 - **Sample Videos**: Public domain videos from Google's sample collection
 
-## Getting Started
-
-1. Clone the repository
-2. Open in Android Studio
-3. Build and run on an Android device or emulator
-4. The app will automatically start playing a video and generating chat messages
-
 ## Performance Goals
 
 ✅ Smooth UI updates under high-frequency message load
+
 ✅ Smart auto-scroll that respects user scroll position
+
 ✅ Retention policy with both count (5,000) and TTL (10 min)
+
 ✅ MVVM architecture with clean separation
+
 ✅ Jetpack Compose with LazyColumn for efficient rendering
+
 ✅ ExoPlayer integration with playlist support
+
 ✅ Pause chat toggle and skipped messages counter
 
 The app demonstrates how to handle high-frequency data streams in Android while maintaining smooth UI performance through intelligent buffering, retention policies, and user-friendly scrolling behavior.
