@@ -39,6 +39,13 @@ android {
     }
 }
 
+// Inherit root ktlint config; nothing to add here, but keep a task alias for convenience
+tasks.register("lintKtlint") {
+    group = "verification"
+    description = "Runs ktlint check"
+    dependsOn(":ktlintCheck")
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
