@@ -20,10 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,7 +31,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.searchlistitems.data.ChatMessage
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -44,49 +41,19 @@ fun ChatList(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    var hasUserScrolledUp by remember { mutableStateOf(false) }
-    var renderedMessages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
-
-    val isAtBottom by remember {
+    // Detect if the last item is visible → we're at the bottom
+    val isAtBottom by remember(messages, listState) {
         derivedStateOf {
-            if (renderedMessages.isEmpty()) true
-            else {
-                val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                val lastIndex = renderedMessages.lastIndex
-                lastVisibleIndex != null && lastVisibleIndex >= lastIndex
-            }
+            if (messages.isEmpty()) true
+            else listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == messages.lastIndex
         }
     }
 
-    // Update rendered messages only when user hasn't scrolled up
-    LaunchedEffect(messages) {
-        if (!hasUserScrolledUp) {
-            renderedMessages = messages
-            if (renderedMessages.isNotEmpty()) {
-                listState.animateScrollToItem(renderedMessages.lastIndex)
-            }
+    // Auto-scroll only when already at bottom
+    LaunchedEffect(messages.size) {
+        if (isAtBottom && messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.lastIndex)
         }
-    }
-
-    // When returning to bottom (by user or program), resume live feed
-    LaunchedEffect(isAtBottom) {
-        if (isAtBottom) {
-            hasUserScrolledUp = false
-            renderedMessages = messages
-        }
-    }
-
-    // Detect user scroll up action
-    LaunchedEffect(listState, renderedMessages) {
-        snapshotFlow { listState.firstVisibleItemIndex to listState.isScrollInProgress }
-            .collectLatest { (firstIndex, isScrolling) ->
-                if (isScrolling) {
-                    val lastIndex = renderedMessages.lastIndex
-                    if (lastIndex >= 0 && firstIndex < lastIndex) {
-                        hasUserScrolledUp = true
-                    }
-                }
-            }
     }
 
     Box(modifier = modifier) {
@@ -99,22 +66,19 @@ fun ChatList(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items(
-                items = renderedMessages,
+                items = messages,
                 key = { it.hashCode() }
             ) { message ->
                 ChatMessageItem(message = message)
             }
         }
 
-        if (!isAtBottom && renderedMessages.isNotEmpty()) {
+        // Show FAB only when not at bottom
+        if (!isAtBottom && messages.isNotEmpty()) {
             FloatingActionButton(
                 onClick = {
                     coroutineScope.launch {
-                        hasUserScrolledUp = false
-                        renderedMessages = messages
-                        if (renderedMessages.isNotEmpty()) {
-                            listState.animateScrollToItem(renderedMessages.lastIndex)
-                        }
+                        listState.animateScrollToItem(messages.lastIndex)
                     }
                 },
                 modifier = Modifier
