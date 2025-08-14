@@ -22,6 +22,7 @@ fun TwitchScreen(
     val skippedMessagesCount by chatViewModel.skippedMessagesCount.collectAsState()
     val isChatPaused by chatViewModel.isChatPaused.collectAsState()
     val memoryInfo by chatViewModel.memoryInfo.collectAsState()
+    val inputText by chatViewModel.inputText.collectAsState()
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -34,14 +35,14 @@ fun TwitchScreen(
             VideoPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp) // Fixed height instead of weight
+                    .height(240.dp)
             )
 
             // Chat and Controls - takes remaining space
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // Takes all remaining space
+                    .weight(1f)
             ) {
                 // Control Panel
                 ControlPanel(
@@ -57,6 +58,14 @@ fun TwitchScreen(
                     messages = chatMessages,
                     modifier = Modifier.weight(1f)
                 )
+
+                // Input bar
+                ChatInputBar(
+                    text = inputText,
+                    onTextChange = { chatViewModel.inputText.value = it },
+                    onSend = { chatViewModel.sendMessage() },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -65,5 +74,5 @@ fun TwitchScreen(
 @Preview(showBackground = true, backgroundColor = 0xFF0E0E10, showSystemUi = true)
 @Composable
 fun TwitchScreenPreview() {
-    TwitchScreen()
+    // Preview without DI
 }

@@ -20,6 +20,9 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
     private val _memoryInfo = MutableStateFlow("Memory: 0 displayed, 0 buffered, max: 500")
     val memoryInfo: StateFlow<String> = _memoryInfo
 
+    // Input state
+    val inputText = MutableStateFlow("")
+
     init {
         repository.startGenerating(viewModelScope)
 
@@ -43,6 +46,14 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     fun resetSkippedCount() {
         repository.resetSkippedCount()
+    }
+
+    fun sendMessage() {
+        val text = inputText.value.trim()
+        if (text.isNotEmpty()) {
+            repository.sendUserMessage(text)
+            inputText.value = ""
+        }
     }
 
     override fun onCleared() {

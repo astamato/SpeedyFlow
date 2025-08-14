@@ -97,6 +97,19 @@ class ChatRepository {
         }
     }
 
+    // Allow user-typed messages to be enqueued into the stream
+    fun sendUserMessage(text: String, username: String = "You") {
+        if (text.isBlank()) return
+        val userMessage = ChatMessage(username = username, message = text.trim())
+        synchronized(messageBuffer) {
+            messageBuffer.add(userMessage)
+            while (messageBuffer.size > maxMessagesInMemory) {
+                messageBuffer.removeAt(0)
+                _skippedMessagesCount.update { it + 1 }
+            }
+        }
+    }
+
     private fun cleanupOldMessages() {
         val cutoffTime = LocalDateTime.now().minus(maxMessageAgeMinutes.toLong(), ChronoUnit.MINUTES)
 
