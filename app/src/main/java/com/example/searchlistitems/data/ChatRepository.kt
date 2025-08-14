@@ -67,7 +67,7 @@ class ChatRepository {
 //                        _skippedMessagesCount.update { it + 1 }
 //                    }
                 }
-                delay(100) // ~50 msg/sec
+                delay(50) // ~50 msg/sec
             }
         }
 
