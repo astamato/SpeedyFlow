@@ -13,7 +13,7 @@ class ChatRepository {
     private val messageBuffer = mutableListOf<ChatMessage>()
 
     // Memory management configuration
-    private val maxMessagesInMemory = 500 // Maximum messages to keep in memory
+    private val maxMessagesInMemory = 5000 // Maximum messages to keep in memory
     private val maxMessageAgeMinutes = 10 // Remove messages older than 10 minutes
     private val cleanupIntervalMs = 30000L // Clean up every 30 seconds
 
@@ -62,12 +62,12 @@ class ChatRepository {
                     messageBuffer.add(message)
 
                     // Remove oldest messages if we exceed the limit
-                    while (messageBuffer.size > maxMessagesInMemory) {
-                        messageBuffer.removeAt(0)
-                        _skippedMessagesCount.update { it + 1 }
-                    }
+//                    while (messageBuffer.size > maxMessagesInMemory) {
+//                        messageBuffer.removeAt(0)
+//                        _skippedMessagesCount.update { it + 1 }
+//                    }
                 }
-                delay(20) // ~50 msg/sec
+                delay(100) // ~50 msg/sec
             }
         }
 
