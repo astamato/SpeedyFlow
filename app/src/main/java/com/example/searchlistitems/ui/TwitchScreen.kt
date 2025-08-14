@@ -45,13 +45,13 @@ fun TwitchScreen(
                     .weight(1f)
             ) {
                 // Control Panel
-                ControlPanel(
-                    isChatPaused = isChatPaused,
-                    skippedMessagesCount = skippedMessagesCount,
-                    memoryInfo = memoryInfo,
-                    onToggleChatPause = { chatViewModel.toggleChatPause() },
-                    onResetSkippedCount = { chatViewModel.resetSkippedCount() }
-                )
+//                ControlPanel(
+//                    isChatPaused = isChatPaused,
+//                    skippedMessagesCount = skippedMessagesCount,
+//                    memoryInfo = memoryInfo,
+//                    onToggleChatPause = { chatViewModel.toggleChatPause() },
+//                    onResetSkippedCount = { chatViewModel.resetSkippedCount() }
+//                )
 
                 // Chat List
                 ChatList(

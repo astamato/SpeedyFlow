@@ -6,17 +6,18 @@ A sample Android application that mimics Twitch's main viewing screen with a vid
 
 ### Video Player
 - **ExoPlayer Integration**: Uses ExoPlayer to stream sample videos from public sources
-- **Random Video Selection**: Automatically selects from a curated list of sample videos
+- **Playlist Support**: All sample videos are queued so built-in next/previous controls work
 - **Auto-loop**: Videos automatically repeat for continuous playback
 - **16:9 Aspect Ratio**: Maintains proper video aspect ratio
 
 ### Live Chat Feed
-- **High-Frequency Message Simulation**: Generates ~30-50 messages per second
-- **Smart Buffering**: Uses a buffering mechanism to handle high message volume
-- **Batch Processing**: Emits updates to UI in batches at ~15 FPS for smooth performance
-- **Message Overflow Handling**: Discards oldest messages when buffer exceeds capacity (200 messages)
-- **Auto-scrolling**: Automatically scrolls to show latest messages
-- **Pause/Resume**: Ability to pause chat generation while maintaining buffer
+- **High-Frequency Message Simulation**: Generates a busy stream of messages
+- **Auto-Scroll**: Auto-scrolls only when the user is at/near the bottom; stops auto-scrolling when the user scrolls up
+- **Scroll-To-Bottom FAB**: When scrolled up, a floating button appears to jump back to the latest message
+- **Input Bar**: Single-line input with a Send button; sent messages are appended immediately to the stream
+- **Message Highlighting**: Messages from `You` are visually highlighted (orange username and subtle bubble)
+- **Batch Processing**: Emits updates to UI in batches for smooth performance
+- **Retention Policy**: Keeps up to 5,000 most recent messages and automatically removes messages older than 10 minutes -- that code is commented tho
 
 ### Performance Optimizations
 - **MVVM Architecture**: Clean separation of concerns with ViewModel and Repository
@@ -26,10 +27,7 @@ A sample Android application that mimics Twitch's main viewing screen with a vid
 - **Synchronized Buffering**: Thread-safe message buffer management
 
 ### UI Controls
-- **Chat Pause/Resume**: Toggle chat message generation
-- **Auto-scroll Toggle**: Enable/disable automatic scrolling to latest messages
-- **Skipped Messages Counter**: Track messages discarded due to buffer overflow
-- **Reset Counter**: Clear the skipped messages count
+- **Scroll-To-Bottom Button**: Appears when the list is not at the bottom
 
 ## Architecture
 
@@ -39,18 +37,25 @@ UI Layer (Compose) → ViewModel → Repository → Data Layer
 ```
 
 ### Components
-- **ChatRepository**: Simulates incoming chat events and manages buffering
-- **ChatViewModel**: Manages UI state and user interactions
-- **VideoPlayer**: ExoPlayer wrapper for video playback
-- **ChatList**: LazyColumn-based chat message display
-- **ControlPanel**: User controls for chat management
+- **ChatRepository**: Simulates incoming chat events, manages retention (count + TTL), and supports sending user messages
+- **ChatViewModel**: Manages UI state, input text, send action, and exposes stats
+- **VideoPlayer**: ExoPlayer wrapper for video playback (playlist)
+- **ChatList**: LazyColumn-based chat message display with smart auto-scroll
+- **ChatInputBar**: Text input + Send button at the bottom of the chat
+- **ControlPanel**: User controls and counters (pause/resume, memory info)
 
-### Data Flow
-1. **Repository** generates messages at high frequency (~50 msg/sec)
-2. **Buffer** accumulates messages with overflow protection
-3. **Batch Processor** emits updates to UI at fixed rate (~15 FPS)
-4. **ViewModel** exposes state to UI components
-5. **UI** renders messages and handles user interactions
+## Message Flow and Rates
+
+- **Generation rate**: By default, a new message is generated every 100 ms (~10 msg/sec). Adjust in `ChatRepository.startGenerating(...)` by changing `delay(100)`.
+- **UI batch cadence**: Repository emits batches approximately every 66 ms (~15 fps) to keep UI smooth.
+- **Send path**: User messages go straight to the UI stream for immediate visibility via `ChatRepository.sendUserMessage(...)`.
+- **Auto-scroll policy**: The UI auto-scrolls only when the user is at/near the bottom. Scrolling up disables auto-scroll; tapping the FAB re-enables it and jumps to the latest message.
+
+## Overflow and Retention
+
+- **Count-based retention**: The UI stream keeps only the last 5,000 messages: see `ChatRepository` where `_messagesFlow.update { (old + batch).takeLast(maxMessagesInMemory) }`.
+- **TTL cleanup**: Messages older than 10 minutes are periodically removed (`cleanupOldMessages()`), independent of count.
+- **Generator trimming (optional)**: Trimming in the generator loop can be enabled to keep the in-memory buffer bounded as well (currently commented in the repo for experimentation).
 
 ## Technical Details
 
@@ -60,42 +65,33 @@ UI Layer (Compose) → ViewModel → Repository → Data Layer
 - **ViewModel**: Lifecycle-aware UI state management
 - **Kotlin Flow**: Reactive programming for state management
 - **Coroutines**: Asynchronous programming
+- **Koin**: Dependency injection for `ChatRepository` and `ChatViewModel`
 
 ### Performance Metrics
-- **Message Generation**: ~50 messages/second
-- **UI Updates**: ~15 FPS (66ms intervals)
-- **Buffer Capacity**: 200 messages
-- **Memory Management**: Automatic cleanup of old messages
+- **UI Updates**: Batched periodically for smoothness
+- **Retention Capacity**: 5,000 messages
+- **Message TTL**: 10 minutes (older messages are cleaned up periodically)
 
 ### Sample Data
-- **20 Usernames**: Gaming and development-themed usernames
-- **40 Messages**: Twitch-style chat messages and emotes
-- **5 Sample Videos**: Public domain videos from Google's sample collection
+- **Usernames**: Gaming and development-themed usernames
+- **Messages**: Twitch-style chat phrases and emotes
+- **Sample Videos**: Public domain videos from Google's sample collection
 
 ## Getting Started
 
 1. Clone the repository
 2. Open in Android Studio
 3. Build and run on an Android device or emulator
-4. The app will automatically start playing a random video and generating chat messages
+4. The app will automatically start playing a video and generating chat messages
 
-## Controls
+## Performance Goals
 
-- **Pause Chat**: Stops message generation but maintains buffer
-- **Resume Chat**: Restarts message generation
-- **Auto-scroll Toggle**: Controls automatic scrolling to latest messages
-- **Reset Counter**: Clears the skipped messages counter
+✅ Smooth UI updates under high-frequency message load
+✅ Smart auto-scroll that respects user scroll position
+✅ Retention policy with both count (5,000) and TTL (10 min)
+✅ MVVM architecture with clean separation
+✅ Jetpack Compose with LazyColumn for efficient rendering
+✅ ExoPlayer integration with playlist support
+✅ Pause chat toggle and skipped messages counter
 
-## Performance Goals Achieved
-
-✅ **30-50 messages/second** simulation
-✅ **Buffering mechanism** for smooth UI updates
-✅ **Batch processing** at fixed rate
-✅ **Buffer overflow handling** with message discarding
-✅ **MVVM architecture** with clean separation
-✅ **Jetpack Compose** with LazyColumn for efficient rendering
-✅ **ExoPlayer** integration for video playback
-✅ **Pause chat toggle** functionality
-✅ **Skipped messages counter** display
-
-The app demonstrates how to handle high-frequency data streams in Android while maintaining smooth UI performance through intelligent buffering and batch processing strategies.
+The app demonstrates how to handle high-frequency data streams in Android while maintaining smooth UI performance through intelligent buffering, retention policies, and user-friendly scrolling behavior.

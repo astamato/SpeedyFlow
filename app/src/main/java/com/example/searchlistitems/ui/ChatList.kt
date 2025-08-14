@@ -18,10 +18,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.searchlistitems.data.ChatMessage
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -41,17 +43,28 @@ fun ChatList(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Detect if the last item is visible → we're at the bottom
-    val isAtBottom by remember(messages, listState) {
-        derivedStateOf {
-            if (messages.isEmpty()) true
-            else listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == messages.lastIndex
+    // Stable flag: when true, we keep snapping to bottom on new messages
+    var autoScroll by remember { mutableStateOf(true) }
+
+    // Observe user scroll and list visibility to toggle autoScroll without flicker
+    LaunchedEffect(listState, messages.size) {
+        snapshotFlow {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            // Consider "at bottom" if the last visible is within 1 item of the end
+            val nearBottom = if (messages.isEmpty()) true else lastVisible >= messages.lastIndex - 1
+            listState.isScrollInProgress to nearBottom
+        }.collectLatest { (scrolling, nearBottom) ->
+            if (scrolling) {
+                if (!nearBottom) autoScroll = false
+            } else {
+                if (nearBottom) autoScroll = true
+            }
         }
     }
 
-    // Auto-scroll only when already at bottom
-    LaunchedEffect(messages.size) {
-        if (isAtBottom && messages.isNotEmpty()) {
+    // Only scroll when autoScroll is enabled
+    LaunchedEffect(messages.size, autoScroll) {
+        if (autoScroll && messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.lastIndex)
         }
     }
@@ -73,12 +86,13 @@ fun ChatList(
             }
         }
 
-        // Show FAB only when not at bottom
-        if (!isAtBottom && messages.isNotEmpty()) {
+        // Show FAB only when auto-scroll is disabled (i.e., user scrolled up)
+        if (!autoScroll && messages.isNotEmpty()) {
             FloatingActionButton(
                 onClick = {
                     coroutineScope.launch {
-                        listState.animateScrollToItem(messages.lastIndex)
+                        autoScroll = true
+                        listState.scrollToItem(messages.lastIndex)
                     }
                 },
                 modifier = Modifier
