@@ -101,6 +101,10 @@ fun ChatMessageItem(
     message: ChatMessage,
     modifier: Modifier = Modifier
 ) {
+    val isMine = message.username == "You"
+    val nameColor = if (isMine) Color(0xFFFF9800) else Color(0xFF00FF00)
+    val bubbleColor = if (isMine) Color(0x332196F3) else Color.Transparent
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -109,7 +113,7 @@ fun ChatMessageItem(
     ) {
         Text(
             text = message.username,
-            color = Color(0xFF00FF00),
+            color = nameColor,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
@@ -119,11 +123,18 @@ fun ChatMessageItem(
             color = Color.White,
             fontSize = 12.sp
         )
-        Text(
-            text = message.message,
-            color = Color.White,
-            fontSize = 12.sp
-        )
+        Box(
+            modifier = Modifier
+                .padding(vertical = 1.dp, horizontal = 0.dp)
+                .background(bubbleColor)
+        ) {
+            Text(
+                text = message.message,
+                color = Color.White,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+        }
     }
 }
 
@@ -139,6 +150,6 @@ fun ChatListPreview() {
 @Composable
 fun ChatMessageItemPreview() {
     ChatMessageItem(
-        message = ChatMessage("PixelPenguin", "Hello everyone! This is a sample chat message for preview.")
+        message = ChatMessage("You", "This is my highlighted message")
     )
 }

@@ -101,12 +101,9 @@ class ChatRepository {
     fun sendUserMessage(text: String, username: String = "You") {
         if (text.isBlank()) return
         val userMessage = ChatMessage(username = username, message = text.trim())
-        synchronized(messageBuffer) {
-            messageBuffer.add(userMessage)
-            while (messageBuffer.size > maxMessagesInMemory) {
-                messageBuffer.removeAt(0)
-                _skippedMessagesCount.update { it + 1 }
-            }
+        // Append directly to the stream so it appears immediately
+        _messagesFlow.update { old ->
+            (old + userMessage).takeLast(maxMessagesInMemory)
         }
     }
 
