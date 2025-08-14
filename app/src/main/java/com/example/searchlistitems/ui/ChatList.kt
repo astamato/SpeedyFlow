@@ -62,10 +62,10 @@ fun ChatList(
         }
     }
 
-    // Only scroll when autoScroll is enabled
+    // Only scroll when autoScroll is enabled (snap, not animate, to avoid rapid animation thrash)
     LaunchedEffect(messages.size, autoScroll) {
         if (autoScroll && messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.lastIndex)
+            listState.scrollToItem(messages.lastIndex)
         }
     }
 
@@ -92,7 +92,8 @@ fun ChatList(
                 onClick = {
                     coroutineScope.launch {
                         autoScroll = true
-                        listState.scrollToItem(messages.lastIndex)
+                        // Animate only on explicit user intent
+                        listState.animateScrollToItem(messages.lastIndex)
                     }
                 },
                 modifier = Modifier
